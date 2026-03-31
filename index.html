@@ -17,7 +17,6 @@
 </head>
 <body class="min-h-screen p-4 font-sans">
 
-  <!-- ECRA DE LOGIN -->
   <div id="loginScreen" class="fixed inset-0 bg-green-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm mx-4 text-center">
       <div class="text-6xl mb-4">🔒</div>
@@ -38,12 +37,12 @@
     </div>
   </div>
 
-  <!-- CONTEUDO DA APP -->
   <div id="appContent" class="hidden max-w-lg mx-auto">
     <div class="text-center mb-6">
       <h1 class="text-3xl font-bold text-green-800">Meu Quintal</h1>
-      <p class="text-green-600 text-sm mt-1">Gestao de plantas e colheitas</p>
+      <p class="text-green-600 text-sm mt-1">Gestão de plantas e colheitas</p>
     </div>
+    
     <div class="bg-white rounded-2xl shadow-md p-5 mb-6">
       <h2 class="text-lg font-semibold text-green-700 mb-4">Adicionar Planta</h2>
       <form id="plantForm" class="space-y-3">
@@ -55,22 +54,25 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Zona / Local</label>
           <input type="text" id="zona" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: Canteiro Norte" />
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Data de Plantio</label>
-          <input type="date" id="data_plantio" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Data de Plantio</label>
+            <input type="date" id="data_plantio" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Dias p/ Colheita</label>
+            <input type="number" id="dias_colheita" required min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: 60" />
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Dias para Colheita</label>
-          <input type="number" id="dias_colheita" required min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: 60" />
-        </div>
-        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Adicionar Planta</button>
+        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors mt-2">Adicionar Planta</button>
       </form>
     </div>
+
     <div>
       <h2 class="text-lg font-semibold text-green-700 mb-3">As Minhas Plantas</h2>
       <div id="loading" class="hidden text-center text-gray-400 text-sm py-8">A carregar...</div>
       <div id="plantList" class="space-y-3"></div>
-      <div id="emptyState" class="hidden text-center text-gray-400 text-sm py-8">Ainda nao tens plantas registadas.</div>
+      <div id="emptyState" class="hidden text-center text-gray-400 text-sm py-8">Ainda não tens plantas registadas.</div>
     </div>
   </div>
 
@@ -81,7 +83,7 @@
       function verificarPassword() {
         var pw = document.getElementById('passwordInput').value;
         if (pw === 'mindelo') {
-          document.getElementById('loginScreen').style.display = 'none';
+          document.getElementById('loginScreen').classList.add('hidden');
           document.getElementById('appContent').classList.remove('hidden');
           iniciarApp();
         } else {
@@ -96,11 +98,12 @@
         if (e.key === 'Enter') verificarPassword();
       });
 
-      // ---- APP ----
+      // ---- APP CONFIG ----
       var SUPABASE_URL  = 'https://gfmibkhgrdgcrgshqrgc.supabase.co';
       var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmbWlia2hncmRnY3Jnc2hxcmdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MzM5MDAsImV4cCI6MjA5MDUwOTkwMH0.NNF-K6HYE8wQKTI5WrXiuAK15EZ6fYiWIOxSx4cyDTk';
       var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+      // Auxiliares
       function calcDC(dp, dc) { var d = new Date(dp); d.setDate(d.getDate() + parseInt(dc)); return d; }
       function fmt(s) { var d = new Date(s + 'T00:00:00'); return d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit', year:'numeric'}); }
       function pronta(dc) { var h = new Date(); h.setHours(0,0,0,0); return dc <= h; }
@@ -111,16 +114,19 @@
         var dc = calcDC(p.data_plantio, p.dias_colheita), pr = pronta(dc), d = dr(dc);
         var c = document.createElement('div');
         c.className = 'rounded-2xl shadow-sm border p-4 ' + (pr ? 'ready-to-harvest border-green-400' : 'bg-white border-gray-100');
+        
         var badge = pr
           ? '<span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">Pronto a Colher!</span>'
           : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">' + d + ' dias</span>';
+        
+        // CORREÇÃO: Aspas simples corrigidas para a chamada das funções
         c.innerHTML =
           '<div class="flex items-center gap-2 mb-1"><h3 class="font-semibold text-gray-800">' + esc(p.nome) + '</h3>' + badge + '</div>' +
           '<p class="text-xs text-gray-500">' + esc(p.zona) + '</p>' +
           '<div class="mt-2 grid grid-cols-2 text-xs text-gray-600"><span>Plantado: ' + fmt(p.data_plantio) + '</span><span>Colheita: ' + fmt(dc.toISOString().split("T")[0]) + '</span></div>' +
           '<div class="flex gap-2 mt-3">' +
-            '<button onclick="colhido('' + p.id + '','' + esc(p.nome) + '')" class="flex-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-xl py-2">Marcar Colhido</button>' +
-            '<button onclick="apagar('' + p.id + '','' + esc(p.nome) + '')" class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded-xl py-2">Apagar</button>' +
+            '<button onclick="colhido(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" class="flex-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-xl py-2">Marcar Colhido</button>' +
+            '<button onclick="apagar(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded-xl py-2">Apagar</button>' +
           '</div>';
         return c;
       }
@@ -129,26 +135,29 @@
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('plantList').innerHTML = '';
         document.getElementById('emptyState').classList.add('hidden');
-        var r = await db.from('plantas').select('*').order('data_plantio', {ascending: false});
+        
+        const { data, error } = await db.from('plantas').select('*').order('data_plantio', {ascending: false});
+        
         document.getElementById('loading').classList.add('hidden');
-        if (r.error) { document.getElementById('plantList').innerHTML = '<div class="text-red-500 text-sm py-4">Erro: ' + r.error.message + '</div>'; return; }
-        if (!r.data || r.data.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); return; }
+        if (error) { document.getElementById('plantList').innerHTML = '<div class="text-red-500 text-sm py-4">Erro: ' + error.message + '</div>'; return; }
+        if (!data || data.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); return; }
+        
         var l = document.getElementById('plantList');
-        r.data.forEach(function(p) { l.appendChild(render(p)); });
+        data.forEach(function(p) { l.appendChild(render(p)); });
       }
 
       window.colhido = async function(id, nome) {
         if (!confirm('Marcar "' + nome + '" como colhido?')) return;
-        var r = await db.from('plantas').delete().eq('id', id);
-        if (r.error) { alert('Erro: ' + r.error.message); return; }
-        await load();
+        const { error } = await db.from('plantas').delete().eq('id', id);
+        if (error) { alert('Erro: ' + error.message); return; }
+        load();
       };
 
       window.apagar = async function(id, nome) {
         if (!confirm('Apagar "' + nome + '"?')) return;
-        var r = await db.from('plantas').delete().eq('id', id);
-        if (r.error) { alert('Erro: ' + r.error.message); return; }
-        await load();
+        const { error } = await db.from('plantas').delete().eq('id', id);
+        if (error) { alert('Erro: ' + error.message); return; }
+        load();
       };
 
       function iniciarApp() {
@@ -156,22 +165,25 @@
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]');
           btn.disabled = true; btn.textContent = 'A guardar...';
+          
           var n = {
             nome:          document.getElementById('nome').value.trim(),
             zona:          document.getElementById('zona').value.trim(),
             data_plantio:  document.getElementById('data_plantio').value,
             dias_colheita: parseInt(document.getElementById('dias_colheita').value)
           };
-          var r = await db.from('plantas').insert([n]);
+          
+          const { error } = await db.from('plantas').insert([n]);
           btn.disabled = false; btn.textContent = 'Adicionar Planta';
-          if (r.error) { alert('Erro: ' + r.error.message); return; }
+          
+          if (error) { alert('Erro: ' + error.message); return; }
           e.target.reset();
-          await load();
+          load();
         });
         load();
       }
 
-    }); // end window.load
+    });
   </script>
 </body>
 </html>
