@@ -1,189 +1,282 @@
 <!DOCTYPE html>
 <html lang="pt">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meu Quintal</title>
-  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { background-color: #f0fdf4; }
-    .ready-to-harvest { animation: pulse-green 2s infinite; }
-    @keyframes pulse-green {
-      0%, 100% { background-color: #dcfce7; }
-      50%       { background-color: #bbf7d0; }
-    }
-  </style>
-</head>
-<body class="min-h-screen p-4 font-sans">
+  <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Meu Quintal</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+          body { background-color: #f0fdf4; }
+          .ready-to-harvest { animation: pulse-green 2s infinite; }
+          @keyframes pulse-green {
+                  0%, 100% { background-color: #dcfce7; }
+                  50%       { background-color: #bbf7d0; }
+          }
+        </style>
+  </head>
+  <body class="min-h-screen p-4 font-sans">
 
-  <div id="loginScreen" class="fixed inset-0 bg-green-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm mx-4 text-center">
-      <div class="text-6xl mb-4">🔒</div>
-      <h1 class="text-2xl font-bold text-green-800 mb-1">Meu Quintal</h1>
-      <p class="text-green-600 text-sm mb-6">Insere a password para entrar</p>
-      <input
-        type="password"
-        id="passwordInput"
-        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 text-center mb-3"
-        placeholder="Password"
-      />
-      <div id="erroLogin" class="hidden text-red-600 text-sm font-semibold mb-3">Acesso Negado</div>
-      <button
-        type="button"
-        id="loginBtn"
-        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl py-4 text-base transition-colors"
-      >Entrar</button>
-    </div>
-  </div>
+      <!-- LOGIN -->
+      <div id="loginScreen" class="fixed inset-0 bg-green-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm mx-4 text-center">
+                    <div class="text-6xl mb-4">&#128274;</div>div>
+                    <h1 class="text-2xl font-bold text-green-800 mb-1">Meu Quintal</h1>h1>
+                    <p class="text-green-600 text-sm mb-6">Insere a password para entrar</p>p>
+                    <input type="password" id="passwordInput"
+                              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 text-center mb-3"
+                              placeholder="Password" />
+                    <div id="erroLogin" class="hidden text-red-600 text-sm font-semibold mb-3">Acesso Negado</div>div>
+                    <button type="button" id="loginBtn"
+                              class="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl py-4 text-base transition-colors">
+                              Entrar
+                    </button>button>
+            </div>div>
+      </div>div>
 
-  <div id="appContent" class="hidden max-w-lg mx-auto">
-    <div class="text-center mb-6">
-      <h1 class="text-3xl font-bold text-green-800">Meu Quintal</h1>
-      <p class="text-green-600 text-sm mt-1">Gestão de plantas e colheitas</p>
-    </div>
-    
-    <div class="bg-white rounded-2xl shadow-md p-5 mb-6">
-      <h2 class="text-lg font-semibold text-green-700 mb-4">Adicionar Planta</h2>
-      <form id="plantForm" class="space-y-3">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Planta</label>
-          <input type="text" id="nome" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: Tomate Cherry" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Zona / Local</label>
-          <input type="text" id="zona" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: Canteiro Norte" />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Data de Plantio</label>
-            <input type="date" id="data_plantio" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Dias p/ Colheita</label>
-            <input type="number" id="dias_colheita" required min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: 60" />
-          </div>
-        </div>
-        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors mt-2">Adicionar Planta</button>
-      </form>
-    </div>
+      <!-- APP -->
+      <div id="appContent" class="hidden max-w-lg mx-auto">
+            <div class="text-center mb-6">
+                    <h1 class="text-3xl font-bold text-green-800">Meu Quintal</h1>h1>
+                    <p class="text-green-600 text-sm mt-1">Gestao de plantas e colheitas</p>p>
+            </div>div>
 
-    <div>
-      <h2 class="text-lg font-semibold text-green-700 mb-3">As Minhas Plantas</h2>
-      <div id="loading" class="hidden text-center text-gray-400 text-sm py-8">A carregar...</div>
-      <div id="plantList" class="space-y-3"></div>
-      <div id="emptyState" class="hidden text-center text-gray-400 text-sm py-8">Ainda não tens plantas registadas.</div>
-    </div>
-  </div>
+            <!-- FORMULARIO -->
+            <div class="bg-white rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="text-lg font-semibold text-green-700 mb-4">Adicionar Planta</h2>h2>
+                    <form id="plantForm" class="space-y-3">
 
-  <script>
-    window.addEventListener('load', function() {
+                              <div>
+                                          <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Planta</label>label>
+                                          <input type="text" id="nome" required
+                                                        class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                                                        placeholder="Ex: Tomate Cherry" />
+                              </div>
 
-      // ---- LOGIN ----
-      function verificarPassword() {
-        var pw = document.getElementById('passwordInput').value;
-        if (pw === 'mindelo') {
-          document.getElementById('loginScreen').classList.add('hidden');
-          document.getElementById('appContent').classList.remove('hidden');
-          iniciarApp();
-        } else {
-          document.getElementById('passwordInput').value = '';
-          document.getElementById('erroLogin').classList.remove('hidden');
-          document.getElementById('passwordInput').focus();
-        }
-      }
+                              <div>
+                                          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>label>
+                                          <select id="tipo"
+                                                        class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+                                                        <option value="Legumes">Legumes</option>option>
+                                                        <option value="Frutas">Frutas</option>option>
+                                                        <option value="Ervas">Ervas</option>option>
+                                          </select>select>
+                              </div>
 
-      document.getElementById('loginBtn').addEventListener('click', verificarPassword);
-      document.getElementById('passwordInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') verificarPassword();
-      });
+                              <div>
+                                          <label class="block text-sm font-medium text-gray-700 mb-1">Local de plantacao</label>label>
+                                          <input type="text" id="zona" required
+                                                        class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                                                        placeholder="Ex: Canteiro Norte" />
+                              </div>
 
-      // ---- APP CONFIG ----
-      var SUPABASE_URL  = 'https://gfmibkhgrdgcrgshqrgc.supabase.co';
-      var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmbWlia2hncmRnY3Jnc2hxcmdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MzM5MDAsImV4cCI6MjA5MDUwOTkwMH0.NNF-K6HYE8wQKTI5WrXiuAK15EZ6fYiWIOxSx4cyDTk';
-      var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+                              <div class="grid grid-cols-2 gap-3">
+                                          <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Data da plantacao</label>label>
+                                                        <input type="date" id="data_plantio" required
+                                                                        class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                                          </div>
+                                          <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Dias ate dar fruto</label>label>
+                                                        <input type="number" id="dias_colheita" min="1"
+                                                                        class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                                                                        placeholder="Ex: 60 (opcional)" />
+                                          </div>
+                              </div>
 
-      // Auxiliares
-      function calcDC(dp, dc) { var d = new Date(dp); d.setDate(d.getDate() + parseInt(dc)); return d; }
-      function fmt(s) { var d = new Date(s + 'T00:00:00'); return d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit', year:'numeric'}); }
-      function pronta(dc) { var h = new Date(); h.setHours(0,0,0,0); return dc <= h; }
-      function dr(dc) { var h = new Date(); h.setHours(0,0,0,0); return Math.ceil((dc - h) / 86400000); }
-      function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+                              <button type="submit"
+                                          class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors mt-2">
+                                          Adicionar Planta
+                              </button>button>
+                    </form>form>
+            </div>
 
-      function render(p) {
-        var dc = calcDC(p.data_plantio, p.dias_colheita), pr = pronta(dc), d = dr(dc);
-        var c = document.createElement('div');
-        c.className = 'rounded-2xl shadow-sm border p-4 ' + (pr ? 'ready-to-harvest border-green-400' : 'bg-white border-gray-100');
-        
-        var badge = pr
-          ? '<span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">Pronto a Colher!</span>'
-          : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">' + d + ' dias</span>';
-        
-        // CORREÇÃO: Aspas simples corrigidas para a chamada das funções
-        c.innerHTML =
-          '<div class="flex items-center gap-2 mb-1"><h3 class="font-semibold text-gray-800">' + esc(p.nome) + '</h3>' + badge + '</div>' +
-          '<p class="text-xs text-gray-500">' + esc(p.zona) + '</p>' +
-          '<div class="mt-2 grid grid-cols-2 text-xs text-gray-600"><span>Plantado: ' + fmt(p.data_plantio) + '</span><span>Colheita: ' + fmt(dc.toISOString().split("T")[0]) + '</span></div>' +
-          '<div class="flex gap-2 mt-3">' +
-            '<button onclick="colhido(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" class="flex-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-xl py-2">Marcar Colhido</button>' +
-            '<button onclick="apagar(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded-xl py-2">Apagar</button>' +
-          '</div>';
-        return c;
-      }
+            <!-- LISTA -->
+            <div>
+                    <h2 class="text-lg font-semibold text-green-700 mb-3">As Minhas Plantas</h2>h2>
+                    <div id="loading" class="hidden text-center text-gray-400 text-sm py-8">A carregar...</div>
+                    <div id="plantList" class="space-y-3"></div>
+                    <div id="emptyState" class="hidden text-center text-gray-400 text-sm py-8">Ainda nao tens plantas registadas.</div>
+            </div>
+      </div>
 
-      async function load() {
-        document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('plantList').innerHTML = '';
-        document.getElementById('emptyState').classList.add('hidden');
-        
-        const { data, error } = await db.from('plantas').select('*').order('data_plantio', {ascending: false});
-        
-        document.getElementById('loading').classList.add('hidden');
-        if (error) { document.getElementById('plantList').innerHTML = '<div class="text-red-500 text-sm py-4">Erro: ' + error.message + '</div>'; return; }
-        if (!data || data.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); return; }
-        
-        var l = document.getElementById('plantList');
-        data.forEach(function(p) { l.appendChild(render(p)); });
-      }
+      <script>
+          window.addEventListener('load', function () {
 
-      window.colhido = async function(id, nome) {
-        if (!confirm('Marcar "' + nome + '" como colhido?')) return;
-        const { error } = await db.from('plantas').delete().eq('id', id);
-        if (error) { alert('Erro: ' + error.message); return; }
-        load();
-      };
+                // ---- LOGIN ----
+                function verificarPassword() {
+                        var pw = document.getElementById('passwordInput').value;
+                        if (pw === 'mindelo') {
+                                  document.getElementById('loginScreen').classList.add('hidden');
+                                  document.getElementById('appContent').classList.remove('hidden');
+                                  iniciarApp();
+                        } else {
+                                  document.getElementById('passwordInput').value = '';
+                                  document.getElementById('erroLogin').classList.remove('hidden');
+                                  document.getElementById('passwordInput').focus();
+                        }
+                }
+                document.getElementById('loginBtn').addEventListener('click', verificarPassword);
+                document.getElementById('passwordInput').addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') verificarPassword();
+                });
 
-      window.apagar = async function(id, nome) {
-        if (!confirm('Apagar "' + nome + '"?')) return;
-        const { error } = await db.from('plantas').delete().eq('id', id);
-        if (error) { alert('Erro: ' + error.message); return; }
-        load();
-      };
+                // ---- CONFIG SUPABASE ----
+                var SUPABASE_URL  = 'https://gfmibkhgrdgcrgshqrgc.supabase.co';
+                var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmbWlia2hncmRnY3Jnc2hxcmdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MzM5MDAsImV4cCI6MjA5MDUwOTkwMH0.NNF-K6HYE8wQKTI5WrXiuAK15EZ6fYiWIOxSx4cyDTk';
+                var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-      function iniciarApp() {
-        document.getElementById('plantForm').addEventListener('submit', async function(e) {
-          e.preventDefault();
-          var btn = e.target.querySelector('button[type="submit"]');
-          btn.disabled = true; btn.textContent = 'A guardar...';
-          
-          var n = {
-            nome:          document.getElementById('nome').value.trim(),
-            zona:          document.getElementById('zona').value.trim(),
-            data_plantio:  document.getElementById('data_plantio').value,
-            dias_colheita: parseInt(document.getElementById('dias_colheita').value)
-          };
-          
-          const { error } = await db.from('plantas').insert([n]);
-          btn.disabled = false; btn.textContent = 'Adicionar Planta';
-          
-          if (error) { alert('Erro: ' + error.message); return; }
-          e.target.reset();
-          load();
-        });
-        load();
-      }
+                // ---- AUXILIARES ----
+                function calcDC(dp, dc) {
+                        var d = new Date(dp);
+                        d.setDate(d.getDate() + parseInt(dc));
+                        return d;
+                }
+                function fmt(s) {
+                        var d = new Date(s + 'T00:00:00');
+                        return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                }
+                function pronta(dc) {
+                        var h = new Date(); h.setHours(0, 0, 0, 0);
+                        return dc <= h;
+                }
+                function dr(dc) {
+                        var h = new Date(); h.setHours(0, 0, 0, 0);
+                        return Math.ceil((dc - h) / 86400000);
+                }
+                function esc(s) {
+                        return String(s)
+                          .replace(/&/g, '&amp;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;')
+                          .replace(/"/g, '&quot;');
+                }
 
-    });
-  </script>
-</body>
-</html>
+                // Badge de tipo
+                var tipoCores = {
+                        'Legumes': 'bg-green-100 text-green-700',
+                        'Frutas':  'bg-yellow-100 text-yellow-700',
+                        'Ervas':   'bg-teal-100 text-teal-700'
+                };
+                function tipoBadge(tipo) {
+                        if (!tipo) return '';
+                        var cls = tipoCores[tipo] || 'bg-gray-100 text-gray-600';
+                        return '<span class="text-xs font-medium px-2 py-0.5 rounded-full ' + cls + '">' + esc(tipo) + '</span>';
+                }
+
+                // ---- RENDER ----
+                function render(p) {
+                        var temDias = p.dias_colheita !== null && p.dias_colheita !== undefined && p.dias_colheita !== '';
+                        var badge, colheitaStr;
+
+                        if (temDias) {
+                                  var dc = calcDC(p.data_plantio, p.dias_colheita);
+                                  var pr = pronta(dc);
+                                  var d  = dr(dc);
+                                  badge       = pr
+                                    ? '<span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">Pronto a Colher!</span>'
+                                              : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">' + d + ' dias</span>';
+                                  colheitaStr = fmt(dc.toISOString().split('T')[0]);
+                        } else {
+                                  badge       = '<span class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full">S/ data</span>';
+                                  colheitaStr = '---';
+                        }
+
+                        var isReady = temDias && pronta(calcDC(p.data_plantio, p.dias_colheita));
+                        var c = document.createElement('div');
+                        c.className = 'rounded-2xl shadow-sm border p-4 ' + (isReady ? 'ready-to-harvest border-green-400' : 'bg-white border-gray-100');
+
+                        c.innerHTML =
+                                  '<div class="flex items-center gap-2 mb-1">' +
+                                    '<h3 class="font-semibold text-gray-800">' + esc(p.nome) + '</h3>' +
+                                    tipoBadge(p.tipo) +
+                                    badge +
+                                  '</div>' +
+                                  '<p class="text-xs text-gray-500">' + esc(p.zona) + '</p>' +
+                                  '<div class="mt-2 grid grid-cols-2 text-xs text-gray-600">' +
+                                    '<span>Plantado: ' + fmt(p.data_plantio) + '</span>' +
+                                    '<span>Colheita: ' + colheitaStr + '</span>' +
+                                  '</div>' +
+                                  '<div class="flex gap-2 mt-3">' +
+                                    '<button onclick="colhido(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" ' +
+                                      'class="flex-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-xl py-2">Marcar Colhido</button>' +
+                                    '<button onclick="apagar(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" ' +
+                                      'class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded-xl py-2">Apagar</button>' +
+                                  '</div>';
+
+                        return c;
+                }
+
+                // ---- LOAD ----
+                async function load() {
+                        document.getElementById('loading').classList.remove('hidden');
+                        document.getElementById('plantList').innerHTML = '';
+                        document.getElementById('emptyState').classList.add('hidden');
+
+                        const { data, error } = await db.from('plantas').select('*').order('data_plantio', { ascending: false });
+                        document.getElementById('loading').classList.add('hidden');
+
+                        if (error) {
+                                  document.getElementById('plantList').innerHTML =
+                                              '<div class="text-red-500 text-sm py-4">Erro: ' + error.message + '</div>';
+                                  return;
+                        }
+                        if (!data || data.length === 0) {
+                                  document.getElementById('emptyState').classList.remove('hidden');
+                                  return;
+                        }
+                        var l = document.getElementById('plantList');
+                        data.forEach(function (p) { l.appendChild(render(p)); });
+                }
+
+                // ---- ACOES ----
+                window.colhido = async function (id, nome) {
+                        if (!confirm('Marcar "' + nome + '" como colhido?')) return;
+                        const { error } = await db.from('plantas').delete().eq('id', id);
+                        if (error) { alert('Erro: ' + error.message); return; }
+                        load();
+                };
+                window.apagar = async function (id, nome) {
+                        if (!confirm('Apagar "' + nome + '"?')) return;
+                        const { error } = await db.from('plantas').delete().eq('id', id);
+                        if (error) { alert('Erro: ' + error.message); return; }
+                        load();
+                };
+
+                // ---- INICIAR APP ----
+                function iniciarApp() {
+                        document.getElementById('plantForm').addEventListener('submit', async function (e) {
+                                  e.preventDefault();
+                                  var btn = e.target.querySelector('button[type="submit"]');
+                                  btn.disabled    = true;
+                                  btn.textContent = 'A guardar...';
+
+                                  var diasVal = document.getElementById('dias_colheita').value.trim();
+                                  var n = {
+                                              nome:         document.getElementById('nome').value.trim(),
+                                              tipo:         document.getElementById('tipo').value,
+                                              zona:         document.getElementById('zona').value.trim(),
+                                              data_plantio: document.getElementById('data_plantio').value,
+                                              dias_colheita: diasVal !== '' ? parseInt(diasVal) : null
+                                  };
+
+                                  const { error } = await db.from('plantas').insert([n]);
+                                  btn.disabled    = false;
+                                  btn.textContent = 'Adicionar Planta';
+
+                                  if (error) { alert('Erro: ' + error.message); return; }
+                                  e.target.reset();
+                                  load();
+                        });
+                        load();
+                }
+
+          });
+      </script>
+  </body>body>
+</html>html>
+      </script>
+                              </div>
+                              </div>
+    </style></title>
+  </head>
