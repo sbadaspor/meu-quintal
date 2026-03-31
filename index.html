@@ -50,30 +50,18 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Planta</label>
           <input type="text" id="nome" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: Tomate Cherry" />
         </div>
-        
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-          <select id="tipo" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
-            <option value="" disabled selected>Escolha uma opção...</option>
-            <option value="Legumes">Legumes</option>
-            <option value="Frutas">Frutas</option>
-            <option value="Ervas">Ervas</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Local de plantação</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Zona / Local</label>
           <input type="text" id="zona" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: Canteiro Norte" />
         </div>
-        
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Data da plantação</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Data de Plantio</label>
             <input type="date" id="data_plantio" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Dias até dar fruto</label>
-            <input type="number" id="dias_colheita" min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: 60 (opcional)" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Dias p/ Colheita</label>
+            <input type="number" id="dias_colheita" required min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Ex: 60" />
           </div>
         </div>
         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors mt-2">Adicionar Planta</button>
@@ -115,63 +103,29 @@
       var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmbWlia2hncmRnY3Jnc2hxcmdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MzM5MDAsImV4cCI6MjA5MDUwOTkwMH0.NNF-K6HYE8wQKTI5WrXiuAK15EZ6fYiWIOxSx4cyDTk';
       var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-      function calcDC(dp, dc) { 
-        if(!dc) return null;
-        var d = new Date(dp); 
-        d.setDate(d.getDate() + parseInt(dc)); 
-        return d; 
-      }
-      
-      function fmt(s) { 
-        if(!s) return '---';
-        var d = new Date(s.includes('T') ? s : s + 'T00:00:00'); 
-        return d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit', year:'numeric'}); 
-      }
-
-      function pronta(dc) { 
-        if(!dc) return false;
-        var h = new Date(); h.setHours(0,0,0,0); 
-        return dc <= h; 
-      }
-
-      function dr(dc) { 
-        if(!dc) return null;
-        var h = new Date(); h.setHours(0,0,0,0); 
-        return Math.ceil((dc - h) / 86400000); 
-      }
-
-      function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+      // Auxiliares
+      function calcDC(dp, dc) { var d = new Date(dp); d.setDate(d.getDate() + parseInt(dc)); return d; }
+      function fmt(s) { var d = new Date(s + 'T00:00:00'); return d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit', year:'numeric'}); }
+      function pronta(dc) { var h = new Date(); h.setHours(0,0,0,0); return dc <= h; }
+      function dr(dc) { var h = new Date(); h.setHours(0,0,0,0); return Math.ceil((dc - h) / 86400000); }
+      function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
       function render(p) {
-        var dc = calcDC(p.data_plantio, p.dias_colheita);
-        var pr = pronta(dc);
-        var d = dr(dc);
-        
+        var dc = calcDC(p.data_plantio, p.dias_colheita), pr = pronta(dc), d = dr(dc);
         var c = document.createElement('div');
         c.className = 'rounded-2xl shadow-sm border p-4 ' + (pr ? 'ready-to-harvest border-green-400' : 'bg-white border-gray-100');
         
-        var badge = '';
-        if (dc) {
-            badge = pr 
-              ? '<span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">Pronto!</span>'
-              : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">' + d + ' dias</span>';
-        }
-
+        var badge = pr
+          ? '<span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">Pronto a Colher!</span>'
+          : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">' + d + ' dias</span>';
+        
+        // CORREÇÃO: Aspas simples corrigidas para a chamada das funções
         c.innerHTML =
-          '<div class="flex items-center justify-between mb-1">' +
-            '<div class="flex items-center gap-2">' +
-              '<h3 class="font-semibold text-gray-800">' + esc(p.nome) + '</h3>' +
-              '<span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">' + esc(p.tipo) + '</span>' +
-            '</div>' + 
-            badge + 
-          '</div>' +
+          '<div class="flex items-center gap-2 mb-1"><h3 class="font-semibold text-gray-800">' + esc(p.nome) + '</h3>' + badge + '</div>' +
           '<p class="text-xs text-gray-500">' + esc(p.zona) + '</p>' +
-          '<div class="mt-2 grid grid-cols-2 text-xs text-gray-600">' +
-            '<span>Plantado: ' + fmt(p.data_plantio) + '</span>' +
-            '<span>Fruto: ' + (dc ? fmt(dc.toISOString().split("T")[0]) : 'S/ data') + '</span>' +
-          '</div>' +
+          '<div class="mt-2 grid grid-cols-2 text-xs text-gray-600"><span>Plantado: ' + fmt(p.data_plantio) + '</span><span>Colheita: ' + fmt(dc.toISOString().split("T")[0]) + '</span></div>' +
           '<div class="flex gap-2 mt-3">' +
-            '<button onclick="colhido(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" class="flex-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-xl py-2">Colhido</button>' +
+            '<button onclick="colhido(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" class="flex-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-xl py-2">Marcar Colhido</button>' +
             '<button onclick="apagar(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded-xl py-2">Apagar</button>' +
           '</div>';
         return c;
@@ -214,23 +168,15 @@
           
           var n = {
             nome:          document.getElementById('nome').value.trim(),
-            tipo:          document.getElementById('tipo').value,
             zona:          document.getElementById('zona').value.trim(),
             data_plantio:  document.getElementById('data_plantio').value,
-            dias_colheita: document.getElementById('dias_colheita').value ? parseInt(document.getElementById('dias_colheita').value) : null
+            dias_colheita: parseInt(document.getElementById('dias_colheita').value)
           };
           
           const { error } = await db.from('plantas').insert([n]);
           btn.disabled = false; btn.textContent = 'Adicionar Planta';
           
-          if (error) { 
-            if(error.message.includes("column \"tipo\" does not exist")) {
-                alert("Erro: Precisas de adicionar a coluna 'tipo' na tua tabela do Supabase.");
-            } else {
-                alert('Erro: ' + error.message); 
-            }
-            return; 
-          }
+          if (error) { alert('Erro: ' + error.message); return; }
           e.target.reset();
           load();
         });
