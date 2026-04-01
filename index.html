@@ -13,7 +13,6 @@
       0%, 100% { background-color: #dcfce7; }
       50%       { background-color: #bbf7d0; }
     }
-    /* Modal overlay */
     #editModal { display: none; }
     #editModal.active { display: flex; }
   </style>
@@ -140,7 +139,7 @@
     </form>
   </div>
 
-  <!-- LISTA -->
+  <!-- LISTA DE PLANTAS ATIVAS -->
   <div>
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-lg font-semibold text-green-700">As Minhas Plantas</h2>
@@ -157,7 +156,27 @@
     <div id="emptyState" class="hidden text-center text-gray-400 text-sm py-8">Ainda não tens plantas registadas.</div>
     <div id="emptyFilter" class="hidden text-center text-gray-400 text-sm py-8">Nenhuma planta nesta categoria.</div>
   </div>
-</div>
+
+  <!-- ARQUIVO DE COLHEITAS (secção colapsável) -->
+  <div class="mt-8 mb-6">
+    <button id="toggleArquivo"
+      class="w-full flex items-center justify-between bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl px-5 py-3 transition-colors">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">&#127807;</span>
+        <span class="text-base font-semibold text-amber-800">Arquivo de Colheitas</span>
+        <span id="arquivoBadge" class="bg-amber-200 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+      </div>
+      <span id="arquivoChevron" class="text-amber-600 text-lg transition-transform">&#9660;</span>
+    </button>
+
+    <div id="arquivoContent" class="hidden mt-3">
+      <div id="arquivoLoading" class="hidden text-center text-gray-400 text-sm py-4">A carregar...</div>
+      <div id="arquivoList" class="space-y-2"></div>
+      <div id="arquivoEmpty" class="hidden text-center text-gray-400 text-sm py-6">Ainda não tens colheitas registadas.</div>
+    </div>
+  </div>
+
+</div><!-- fim appContent -->
 
 <script>
 window.addEventListener('load', function () {
@@ -185,8 +204,9 @@ window.addEventListener('load', function () {
   var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmbWlia2hncmRnY3Jnc2hxcmdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MzM5MDAsImV4cCI6MjA5MDUwOTkwMH0.NNF-K6HYE8wQKTI5WrXiuAK15EZ6fYiWIOxSx4cyDTk';
   var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  // ---- CACHE DE PLANTAS ----
+  // ---- CACHES ----
   var todasAsPlantas = [];
+  var arquivoAberto  = false;
 
   // ---- AUXILIARES ----
   function calcDC(dp, dc) {
@@ -194,84 +214,75 @@ window.addEventListener('load', function () {
     d.setDate(d.getDate() + parseInt(dc));
     return d;
   }
-
   function fmt(s) {
     var d = new Date(s + 'T00:00:00');
     return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
-
   function diasPassados(dp) {
-    var hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    var hoje = new Date(); hoje.setHours(0,0,0,0);
     var plantado = new Date(dp + 'T00:00:00');
     var diff = Math.floor((hoje - plantado) / 86400000);
     if (diff === 0) return 'hoje';
     if (diff === 1) return 'há 1 dia';
     return 'há ' + diff + ' dias';
   }
-
   function pronta(dc) {
-    var h = new Date();
-    h.setHours(0, 0, 0, 0);
+    var h = new Date(); h.setHours(0,0,0,0);
     return dc <= h;
   }
-
   function dr(dc) {
-    var h = new Date();
-    h.setHours(0, 0, 0, 0);
+    var h = new Date(); h.setHours(0,0,0,0);
     return Math.ceil((dc - h) / 86400000);
   }
-
   function esc(s) {
     return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
+  function dataHoje() {
+    var d = new Date();
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    return d.getFullYear() + '-' + mm + '-' + dd;
+  }
   var tipoCores = {
-    'Legumes': 'bg-green-100 text-green-700',
-    'Frutas':  'bg-yellow-100 text-yellow-700',
-    'Ervas':   'bg-teal-100 text-teal-700'
+    'Legumes':'bg-green-100 text-green-700',
+    'Frutas':'bg-yellow-100 text-yellow-700',
+    'Ervas':'bg-teal-100 text-teal-700'
   };
-
   function tipoBadge(tipo) {
     if (!tipo) return '';
     var cls = tipoCores[tipo] || 'bg-gray-100 text-gray-600';
     return '<span class="text-xs font-medium px-2 py-0.5 rounded-full ' + cls + '">' + esc(tipo) + '<\/span>';
   }
 
-  // ---- RENDER (um cartão) ----
+  // ---- RENDER CARTÃO PLANTA ----
   function render(p) {
     var temDias = p.dias_colheita !== null && p.dias_colheita !== undefined && p.dias_colheita !== '';
     var badge, colheitaStr;
-
     if (temDias) {
-      var dc  = calcDC(p.data_plantio, p.dias_colheita);
-      var pr  = pronta(dc);
-      var d   = dr(dc);
+      var dc = calcDC(p.data_plantio, p.dias_colheita);
+      var pr = pronta(dc);
+      var d  = dr(dc);
       badge = pr
         ? '<span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">Pronto a Colher!<\/span>'
         : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">' + d + ' dias<\/span>';
       colheitaStr = fmt(dc.toISOString().split('T')[0]);
     } else {
-      badge       = '<span class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full">S\/ data<\/span>';
+      badge = '<span class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full">S\/ data<\/span>';
       colheitaStr = '---';
     }
-
     var isReady = temDias && pronta(calcDC(p.data_plantio, p.dias_colheita));
     var diasStr = diasPassados(p.data_plantio);
+    var nomeEsc = esc(p.nome).replace(/'/g, "\\'");
 
     var c = document.createElement('div');
     c.className = 'rounded-2xl shadow-sm border p-4 ' +
       (isReady ? 'ready-to-harvest border-green-400' : 'bg-white border-gray-100');
-
     c.innerHTML =
       '<div class="flex items-center gap-2 mb-1">' +
         '<h3 class="font-semibold text-gray-800">' + esc(p.nome) + '<\/h3>' +
-        tipoBadge(p.tipo) +
-        badge +
+        tipoBadge(p.tipo) + badge +
       '<\/div>' +
       '<p class="text-xs text-gray-500">' + esc(p.zona) + '<\/p>' +
       '<div class="mt-2 grid grid-cols-2 text-xs text-gray-600">' +
@@ -279,12 +290,13 @@ window.addEventListener('load', function () {
         '<span>Possível colheita a partir de: ' + colheitaStr + '<\/span>' +
       '<\/div>' +
       '<div class="flex gap-2 mt-3">' +
+        '<button onclick="marcarColhido(\'' + p.id + '\')" ' +
+          'class="flex-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-xl py-2">&#127807; Colhido<\/button>' +
         '<button onclick="editarPlanta(\'' + p.id + '\')" ' +
           'class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs rounded-xl py-2">Editar<\/button>' +
-        '<button onclick="apagar(\'' + p.id + '\',\'' + esc(p.nome).replace(/'/g, "\\'") + '\')" ' +
+        '<button onclick="apagar(\'' + p.id + '\',\'' + nomeEsc + '\')" ' +
           'class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded-xl py-2">Apagar<\/button>' +
       '<\/div>';
-
     return c;
   }
 
@@ -293,66 +305,111 @@ window.addEventListener('load', function () {
     var filtro = document.getElementById('filtroTipo').value;
     var lista  = filtro === 'Todas'
       ? todasAsPlantas
-      : todasAsPlantas.filter(function (p) { return p.tipo === filtro; });
-
+      : todasAsPlantas.filter(function(p){ return p.tipo === filtro; });
     var l = document.getElementById('plantList');
     l.innerHTML = '';
     document.getElementById('emptyState').classList.add('hidden');
     document.getElementById('emptyFilter').classList.add('hidden');
-
     if (todasAsPlantas.length === 0) {
-      document.getElementById('emptyState').classList.remove('hidden');
-      return;
+      document.getElementById('emptyState').classList.remove('hidden'); return;
     }
     if (lista.length === 0) {
-      document.getElementById('emptyFilter').classList.remove('hidden');
-      return;
+      document.getElementById('emptyFilter').classList.remove('hidden'); return;
     }
-    lista.forEach(function (p) { l.appendChild(render(p)); });
+    lista.forEach(function(p){ l.appendChild(render(p)); });
   }
 
-  // ---- LOAD ----
+  // ---- LOAD PLANTAS ----
   async function load() {
     document.getElementById('loading').classList.remove('hidden');
     document.getElementById('plantList').innerHTML = '';
     document.getElementById('emptyState').classList.add('hidden');
     document.getElementById('emptyFilter').classList.add('hidden');
-
     const { data, error } = await db
-      .from('plantas')
-      .select('*')
-      .order('data_plantio', { ascending: false });
-
+      .from('plantas').select('*').order('data_plantio', { ascending: false });
     document.getElementById('loading').classList.add('hidden');
-
     if (error) {
       document.getElementById('plantList').innerHTML =
-        '<div class="text-red-500 text-sm py-4">Erro: ' + error.message + '<\/div>';
-      return;
+        '<div class="text-red-500 text-sm py-4">Erro: ' + error.message + '<\/div>'; return;
     }
     todasAsPlantas = data || [];
     aplicarFiltro();
   }
 
-  // ---- EDITAR PLANTA ----
-  window.editarPlanta = function (id) {
-    var p = todasAsPlantas.find(function (x) { return String(x.id) === String(id); });
+  // ---- LOAD ARQUIVO ----
+  async function loadArquivo() {
+    document.getElementById('arquivoLoading').classList.remove('hidden');
+    document.getElementById('arquivoList').innerHTML = '';
+    document.getElementById('arquivoEmpty').classList.add('hidden');
+    const { data, error } = await db
+      .from('historico').select('*').order('data_colheita', { ascending: false });
+    document.getElementById('arquivoLoading').classList.add('hidden');
+    if (error) {
+      document.getElementById('arquivoList').innerHTML =
+        '<div class="text-red-500 text-sm py-4">Erro: ' + error.message + '<\/div>'; return;
+    }
+    var registos = data || [];
+    document.getElementById('arquivoBadge').textContent = registos.length;
+    if (registos.length === 0) {
+      document.getElementById('arquivoEmpty').classList.remove('hidden'); return;
+    }
+    var l = document.getElementById('arquivoList');
+    registos.forEach(function(h) {
+      var row = document.createElement('div');
+      row.className = 'bg-white border border-amber-100 rounded-xl px-4 py-3 flex items-center justify-between';
+      row.innerHTML =
+        '<div class="flex items-center gap-2">' +
+          '<span class="text-lg">&#127807;<\/span>' +
+          '<div>' +
+            '<p class="text-sm font-semibold text-gray-800">' + esc(h.nome) + '<\/p>' +
+            '<p class="text-xs text-gray-500">' + (h.tipo || '') + '<\/p>' +
+          '<\/div>' +
+        '<\/div>' +
+        '<span class="text-xs text-amber-700 font-medium bg-amber-50 px-2 py-1 rounded-lg">Colhido em ' + fmt(h.data_colheita) + '<\/span>';
+      l.appendChild(row);
+    });
+  }
+
+  // ---- MARCAR COLHIDO (move para historico) ----
+  window.marcarColhido = async function(id) {
+    var p = todasAsPlantas.find(function(x){ return String(x.id) === String(id); });
     if (!p) return;
+    if (!confirm('Marcar "' + p.nome + '" como colhida? A planta será movida para o Arquivo de Colheitas.')) return;
+    var registo = {
+      nome: p.nome,
+      tipo: p.tipo || null,
+      zona: p.zona || null,
+      data_plantio: p.data_plantio || null,
+      data_colheita: dataHoje()
+    };
+    const { error: errIns } = await db.from('historico').insert([registo]);
+    if (errIns) { alert('Erro ao guardar no histórico: ' + errIns.message); return; }
+    const { error: errDel } = await db.from('plantas').delete().eq('id', id);
+    if (errDel) { alert('Erro ao remover a planta: ' + errDel.message); return; }
+    load();
+    if (arquivoAberto) loadArquivo();
+    else {
+      // Actualizar apenas o badge
+      db.from('historico').select('id', { count: 'exact', head: true }).then(function(res){
+        if (!res.error) document.getElementById('arquivoBadge').textContent = res.count || 0;
+      });
+    }
+  };
 
-    document.getElementById('edit_nome').value          = p.nome || '';
-    document.getElementById('edit_tipo').value          = p.tipo || 'Legumes';
-    document.getElementById('edit_zona').value          = p.zona || '';
-    document.getElementById('edit_data_plantio').value  = p.data_plantio || '';
-    document.getElementById('edit_dias_colheita').value = p.dias_colheita !== null && p.dias_colheita !== undefined ? p.dias_colheita : '';
-
+  // ---- EDITAR PLANTA ----
+  window.editarPlanta = function(id) {
+    var p = todasAsPlantas.find(function(x){ return String(x.id) === String(id); });
+    if (!p) return;
+    document.getElementById('edit_nome').value         = p.nome || '';
+    document.getElementById('edit_tipo').value         = p.tipo || 'Legumes';
+    document.getElementById('edit_zona').value         = p.zona || '';
+    document.getElementById('edit_data_plantio').value = p.data_plantio || '';
+    document.getElementById('edit_dias_colheita').value = (p.dias_colheita !== null && p.dias_colheita !== undefined) ? p.dias_colheita : '';
     var modal = document.getElementById('editModal');
     modal.classList.add('active');
-
-    document.getElementById('editSaveBtn').onclick = async function () {
+    document.getElementById('editSaveBtn').onclick = async function() {
       var btn = document.getElementById('editSaveBtn');
-      btn.disabled    = true;
-      btn.textContent = 'A guardar...';
-
+      btn.disabled = true; btn.textContent = 'A guardar...';
       var diasVal = document.getElementById('edit_dias_colheita').value.trim();
       var updates = {
         nome:          document.getElementById('edit_nome').value.trim(),
@@ -361,28 +418,20 @@ window.addEventListener('load', function () {
         data_plantio:  document.getElementById('edit_data_plantio').value,
         dias_colheita: diasVal !== '' ? parseInt(diasVal) : null
       };
-
       const { error } = await db.from('plantas').update(updates).eq('id', id);
-
-      btn.disabled    = false;
-      btn.textContent = 'Guardar';
-
-      if (error) {
-        alert('Erro ao guardar: ' + error.message);
-        return;
-      }
+      btn.disabled = false; btn.textContent = 'Guardar';
+      if (error) { alert('Erro ao guardar: ' + error.message); return; }
       modal.classList.remove('active');
       load();
     };
-
-    document.getElementById('editCancelBtn').onclick = function () {
+    document.getElementById('editCancelBtn').onclick = function() {
       modal.classList.remove('active');
     };
   };
 
   // ---- APAGAR ----
-  window.apagar = async function (id, nome) {
-    if (!confirm('Apagar "' + nome + '"?')) return;
+  window.apagar = async function(id, nome) {
+    if (!confirm('Apagar "' + nome + '"? Esta ação não pode ser desfeita.')) return;
     const { error } = await db.from('plantas').delete().eq('id', id);
     if (error) { alert('Erro: ' + error.message); return; }
     load();
@@ -392,12 +441,30 @@ window.addEventListener('load', function () {
   function iniciarApp() {
     document.getElementById('filtroTipo').addEventListener('change', aplicarFiltro);
 
-    document.getElementById('plantForm').addEventListener('submit', async function (e) {
+    // Toggle arquivo colapsável
+    document.getElementById('toggleArquivo').addEventListener('click', function() {
+      arquivoAberto = !arquivoAberto;
+      var content  = document.getElementById('arquivoContent');
+      var chevron  = document.getElementById('arquivoChevron');
+      if (arquivoAberto) {
+        content.classList.remove('hidden');
+        chevron.style.transform = 'rotate(180deg)';
+        loadArquivo();
+      } else {
+        content.classList.add('hidden');
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // Carregar badge inicial do arquivo
+    db.from('historico').select('id', { count: 'exact', head: true }).then(function(res){
+      if (!res.error) document.getElementById('arquivoBadge').textContent = res.count || 0;
+    });
+
+    document.getElementById('plantForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       var btn = e.target.querySelector('button[type="submit"]');
-      btn.disabled    = true;
-      btn.textContent = 'A guardar...';
-
+      btn.disabled = true; btn.textContent = 'A guardar...';
       var diasVal = document.getElementById('dias_colheita').value.trim();
       var n = {
         nome:          document.getElementById('nome').value.trim(),
@@ -406,11 +473,8 @@ window.addEventListener('load', function () {
         data_plantio:  document.getElementById('data_plantio').value,
         dias_colheita: diasVal !== '' ? parseInt(diasVal) : null
       };
-
       const { error } = await db.from('plantas').insert([n]);
-      btn.disabled    = false;
-      btn.textContent = 'Adicionar Planta';
-
+      btn.disabled = false; btn.textContent = 'Adicionar Planta';
       if (error) { alert('Erro: ' + error.message); return; }
       e.target.reset();
       load();
